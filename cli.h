@@ -230,8 +230,8 @@ void cli_args_init(cli_args* args, size_t cap) {
 }
 
 void cli_args_cleanup(cli_args* args) {
-  for (; args->idx > 0; args->idx--) {
-    free(args->args[args->idx]);
+  for (; args->idx != 0; args->idx--) {
+    free(args->args[args->idx - 1]);
   }
   free(args->args);
 }
@@ -536,17 +536,44 @@ cli_err cli_add_flag(cli_command* cli,
                       false, true);
 }
 
-cli_err cli_add_int_argument();
+cli_err cli_add_int_argument(cli_command* cli, int* value) {
+  return cli_args_add(cli->args, int_arg_parser, (void*)value);
+};
 
-cli_err cli_add_int_option();
+cli_err cli_add_int_option(cli_command* cli,
+                           const char* name,
+                           const char* usage,
+                           int* value,
+                           bool required) {
+  return cli_opts_add(cli->opts, name, usage, int_opt_parser, (void*)value,
+                      required, false);
+};
 
-cli_err cli_add_float_argument();
+cli_err cli_add_float_argument(cli_command* cli, int* value) {
+  return cli_args_add(cli->args, float_arg_parser, (void*)value);
+};
 
-cli_err cli_add_float_option();
+cli_err cli_add_float_option(cli_command* cli,
+                             const char* name,
+                             const char* usage,
+                             float* value,
+                             bool required) {
+  return cli_opts_add(cli->opts, name, usage, float_opt_parser, (void*)value,
+                      required, false);
+};
 
-cli_err cli_add_str_argument();
+cli_err cli_add_str_argument(cli_command* cli, char* value) {
+  return cli_args_add(cli->args, str_arg_parser, (void*)value);
+};
 
-cli_err cli_add_str_option();
+cli_err cli_add_str_option(cli_command* cli,
+                           const char* name,
+                           const char* usage,
+                           char* value,
+                           bool required) {
+  return cli_opts_add(cli->opts, name, usage, str_opt_parser, (char*)value,
+                      required, false);
+};
 
 void cli_print_help_and_exit(cli_command* cli) {
   char buf[1024];
