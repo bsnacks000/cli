@@ -1,14 +1,3 @@
-/**
- * @file flags.h
-
- A flags API similar to go
-
- * @version 0.1
- * @date 2024-04-04
- *
- * @copyright Copyright (c) 2024
- *
- */
 #ifndef __CLI_H__
 #define __CLI_H__
 
