@@ -7,8 +7,6 @@ set(CMAKE_C_STANDARD_REQUIRED 17)
 set(CMAKE_CXX_STANDARD_REQUIRED 20)
 set(CMAKE_BUILD_TYPE Release)
 
-set(LIBRARY_NAME cli)
-
 set(LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
 
 # Add Googletest
@@ -21,6 +19,13 @@ CPMAddPackage(
     SOURCE_DIR ${LIB_DIR}/gtest
 )
 
+# Build the lib
+set(LIBRARY_NAME cli)
+
+add_library(${LIBRARY_NAME} SHARED cli.c)
+target_include_directories(${LIBRARY_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/include")
+target_compile_options(${LIBRARY_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror)
+
 # use CTest and build the test suite
 enable_testing()
 
@@ -31,7 +36,10 @@ add_executable(${LIBRARY_NAME}_tests
 target_link_libraries(${LIBRARY_NAME}_tests
     PRIVATE
     gtest_main
+    ${LIBRARY_NAME}
 )
+
+target_include_directories(${LIBRARY_NAME}_tests PRIVATE "${CMAKE_SOURCE_DIR}/include")
 
 target_compile_options(${LIBRARY_NAME}_tests PRIVATE -Wall -Wextra -Wpedantic -Werror)
 

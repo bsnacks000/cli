@@ -1,10 +1,3 @@
-#ifndef __CLI_H__
-#define __CLI_H__
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <errno.h>
 #include <float.h>
 #include <limits.h>
@@ -13,6 +6,8 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "cli/cli.h"
 
 #define CLI_OPT_TOKEN_MAX_LEN 24
 #define CLI_OPT_USAGE_MAX_LEN 64
@@ -26,22 +21,6 @@ extern "C" {
       exit(EXIT_FAILURE);                \
     }                                    \
   } while (0)
-
-typedef enum cli_err {
-  CLI_OK = 0,
-  CLI_PARSE_FAILED = 1,
-  CLI_FULL_REGISTRY,
-  CLI_NOT_FOUND,
-  CLI_NAME_REQUIRED,
-  CLI_UNSEEN_REQ_OPTS,
-  CLI_OUT_OF_BOUNDS,
-  CLI_ALREADY_SEEN,
-  CLI_ARG_COUNT,
-  CLI_MISCONFIGURED,
-  CLI_PRINT_HELP_AND_EXIT,
-  CLI_TOKEN_TOO_LONG,
-  CLI_USAGE_STR_TOO_LONG
-} cli_err;
 
 void cli_print_err(cli_err err) {
   switch (err) {
@@ -435,18 +414,6 @@ cli_err bool_opt_parser(cli_opt* opt, const char* arg) {
     }
     return CLI_OK;
   }
-  // if an arg was pass assure it is valid bool repr
-  char* valid_true[4] = {"T", "t", "true", "1"};
-  char* valid_false[4] = {"F", "f", "false", "0"};
-
-  for (int i = 0; i < 4; i++) {
-    if ((strcmp(arg, valid_true[i])) == 0) {
-      *val = true;
-    } else if ((strcmp(arg, valid_false[i])) == 0) {
-      *val = false;
-    }
-  }
-
   return CLI_PARSE_FAILED;
 }
 
@@ -527,7 +494,7 @@ cli_err cli_add_flag(cli_command* cli,
 
 cli_err cli_add_int_argument(cli_command* cli, int* value) {
   return cli_args_add(cli->args, int_arg_parser, (void*)value);
-};
+}
 
 cli_err cli_add_int_option(cli_command* cli,
                            const char* name,
@@ -536,11 +503,11 @@ cli_err cli_add_int_option(cli_command* cli,
                            bool required) {
   return cli_opts_add(cli->opts, name, usage, int_opt_parser, (void*)value,
                       required, false);
-};
+}
 
 cli_err cli_add_float_argument(cli_command* cli, int* value) {
   return cli_args_add(cli->args, float_arg_parser, (void*)value);
-};
+}
 
 cli_err cli_add_float_option(cli_command* cli,
                              const char* name,
@@ -549,11 +516,11 @@ cli_err cli_add_float_option(cli_command* cli,
                              bool required) {
   return cli_opts_add(cli->opts, name, usage, float_opt_parser, (void*)value,
                       required, false);
-};
+}
 
 cli_err cli_add_str_argument(cli_command* cli, char* value) {
   return cli_args_add(cli->args, str_arg_parser, (void*)value);
-};
+}
 
 cli_err cli_add_str_option(cli_command* cli,
                            const char* name,
@@ -562,12 +529,12 @@ cli_err cli_add_str_option(cli_command* cli,
                            bool required) {
   return cli_opts_add(cli->opts, name, usage, str_opt_parser, (char*)value,
                       required, false);
-};
+}
 
 void cli_print_help_and_exit(cli_command* cli) {
   char buf[1024];
 
-  char* initial =
+  char initial[] =
       "%s\n\nUsage:\n\t%s %s\nOptions:\n\t-h,--help\tPrint usage and exit.\n";
 
   snprintf(buf, 1024, initial, cli->desc, cli->argv[0], cli->usage);
@@ -598,9 +565,3 @@ cli_err cli_parse(cli_command* cli) {
   }
   return err;
 }
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif  //!__CLI_H__
