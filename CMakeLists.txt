@@ -23,7 +23,7 @@ CPMAddPackage(
 set(LIBRARY_NAME cli)
 
 add_library(${LIBRARY_NAME} SHARED cli.c)
-target_include_directories(${LIBRARY_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/include")
+target_include_directories(${LIBRARY_NAME} PUBLIC "${CMAKE_SOURCE_DIR}")
 target_compile_options(${LIBRARY_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror)
 
 # use CTest and build the test suite
@@ -39,7 +39,7 @@ target_link_libraries(${LIBRARY_NAME}_tests
     ${LIBRARY_NAME}
 )
 
-target_include_directories(${LIBRARY_NAME}_tests PRIVATE "${CMAKE_SOURCE_DIR}/include")
+target_include_directories(${LIBRARY_NAME}_tests PRIVATE "${CMAKE_SOURCE_DIR}")
 
 target_compile_options(${LIBRARY_NAME}_tests PRIVATE -Wall -Wextra -Wpedantic -Werror)
 

@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "cli/cli.h"
+#include "cli.h"
 
 // to unittest private API components
 #include "cli.c"

@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "cli/cli.h"
+#include "cli.h"
 
 #define CLI_OPT_TOKEN_MAX_LEN 24
 #define CLI_OPT_USAGE_MAX_LEN 64
