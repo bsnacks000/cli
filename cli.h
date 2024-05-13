@@ -38,9 +38,9 @@ typedef enum cli_err {
 
 void cli_print_err(cli_err err);
 
-// High level API
-
 typedef struct cli_command cli_command;
+
+cli_command* cli_command_new(void);
 
 cli_err cli_init(cli_command* cli,
                  const char* desc,

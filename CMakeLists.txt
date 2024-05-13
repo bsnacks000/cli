@@ -22,7 +22,7 @@ CPMAddPackage(
 # Build the lib
 set(LIBRARY_NAME cli)
 
-add_library(${LIBRARY_NAME} SHARED cli.c)
+add_library(${LIBRARY_NAME} STATIC cli.c)
 target_include_directories(${LIBRARY_NAME} PUBLIC "${CMAKE_SOURCE_DIR}")
 target_compile_options(${LIBRARY_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror)
 
@@ -30,7 +30,7 @@ target_compile_options(${LIBRARY_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror)
 enable_testing()
 
 add_executable(${LIBRARY_NAME}_tests
-    test.cpp
+    test_public.cpp
 )
 
 target_link_libraries(${LIBRARY_NAME}_tests

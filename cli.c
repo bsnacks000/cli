@@ -434,6 +434,12 @@ typedef struct cli_command {
   char** argv;
 } cli_command;
 
+cli_command* cli_command_new(void) {
+  cli_command* c = (cli_command*)malloc(sizeof(cli_command));
+  CLI_CHECK_MEM_ALLOC(c);
+  return c;
+}
+
 cli_err cli_init(cli_command* cli,
                  const char* desc,
                  const char* usage,
