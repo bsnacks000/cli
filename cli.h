@@ -22,7 +22,7 @@ extern "C" {
 
 typedef enum cli_err {
   CLI_OK = 0,
-  CLI_PARSE_FAILED = 1,
+  CLI_PARSE_FAILED,
   CLI_FULL_REGISTRY,
   CLI_NOT_FOUND,
   CLI_NAME_REQUIRED,

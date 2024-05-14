@@ -12,16 +12,6 @@
 #define CLI_OPT_TOKEN_MAX_LEN 24
 #define CLI_OPT_USAGE_MAX_LEN 64
 
-#define CLI_UNUSED(x) (void)(x)
-
-#define CLI_CHECK_MEM_ALLOC(value)       \
-  do {                                   \
-    if ((value) == NULL) {               \
-      fprintf(stderr, "Out of memory."); \
-      exit(EXIT_FAILURE);                \
-    }                                    \
-  } while (0)
-
 void cli_print_err(cli_err err) {
   switch (err) {
     case CLI_PARSE_FAILED:
@@ -339,6 +329,7 @@ cli_err cli_parse_loop(cli_opts* opts, cli_args* args, int argc, char** argv) {
       }
     }
   }
+
   return CLI_OK;
 }
 
@@ -346,14 +337,14 @@ cli_err cli_parse_loop(cli_opts* opts, cli_args* args, int argc, char** argv) {
 // TODO add float
 
 cli_err str_opt_parser(cli_opt* opt, const char* token) {
-  char** val = (char**)(opt->value);
-  *val = (char*)token;
+  char* val = (char*)(opt->value);
+  strcpy(val, token);
   return CLI_OK;
 }
 
 cli_err str_arg_parser(cli_arg* arg, const char* token) {
-  char** val = (char**)(arg->value);
-  *val = (char*)token;
+  char* val = (char*)(arg->value);
+  strcpy(val, token);
   return CLI_OK;
 }
 
@@ -533,7 +524,7 @@ cli_err cli_add_str_option(cli_command* cli,
                            const char* usage,
                            char* value,
                            bool required) {
-  return cli_opts_add(cli->opts, name, usage, str_opt_parser, (char*)value,
+  return cli_opts_add(cli->opts, name, usage, str_opt_parser, (void*)value,
                       required, false);
 }
 
@@ -569,5 +560,6 @@ cli_err cli_parse(cli_command* cli) {
   if (err == CLI_PRINT_HELP_AND_EXIT) {
     cli_print_help_and_exit(cli);
   }
+
   return err;
 }
