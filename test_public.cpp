@@ -21,7 +21,7 @@ TEST(public, test_cli_init_) {
   const char* desc = "A useful app";
   const char* usage = "[OPTIONS]... [N]";
 
-  err = cli_init(c, desc, usage, argc, (char**)argv, 1, 1);
+  err = cli_init(c, desc, usage, argc, (char**)argv);
   ASSERT_EQ(err, CLI_OK);
 
   free(c);
@@ -36,10 +36,8 @@ TEST(public, test_cli_parse_sets_boolean_flag_correctly) {
   cli_err err;
   const char* desc = "A useful app";
   const char* usage = "[OPTIONS]... [N]";
-  size_t n_opts = 2;
-  size_t n_args = 0;
 
-  err = cli_init(c, desc, usage, argc, (char**)argv, n_opts, n_args);
+  err = cli_init(c, desc, usage, argc, (char**)argv);
   ASSERT_EQ(err, CLI_OK);
 
   bool x_bool = false;
@@ -68,10 +66,8 @@ TEST(public, test_cli_parse_set_str_option_correctly) {
   cli_err err;
   const char* desc = "A useful app";
   const char* usage = "[OPTIONS]... [N]";
-  size_t n_opts = 1;
-  size_t n_args = 0;
 
-  err = cli_init(c, desc, usage, argc, (char**)argv, n_opts, n_args);
+  err = cli_init(c, desc, usage, argc, (char**)argv);
   ASSERT_EQ(err, CLI_OK);
 
   char buf[20] = "";
@@ -96,10 +92,8 @@ TEST(public, test_cli_parse_set_int_option_correctly) {
   cli_err err;
   const char* desc = "A useful app";
   const char* usage = "[OPTIONS]... [N]";
-  size_t n_opts = 1;
-  size_t n_args = 0;
 
-  err = cli_init(c, desc, usage, argc, (char**)argv, n_opts, n_args);
+  err = cli_init(c, desc, usage, argc, (char**)argv);
   ASSERT_EQ(err, CLI_OK);
 
   int x = 0;
@@ -124,10 +118,8 @@ TEST(public, test_cli_parse_set_float_option_correctly) {
   cli_err err;
   const char* desc = "A useful app";
   const char* usage = "[OPTIONS]... [N]";
-  size_t n_opts = 1;
-  size_t n_args = 0;
 
-  err = cli_init(c, desc, usage, argc, (char**)argv, n_opts, n_args);
+  err = cli_init(c, desc, usage, argc, (char**)argv);
   ASSERT_EQ(err, CLI_OK);
 
   float x = 0.0;
@@ -152,11 +144,8 @@ TEST(public, test_cli_parse_set_str_args_correctly) {
   cli_err err;
   const char* desc = "A useful app";
   const char* usage = "[OPTIONS]... [N]";
-  size_t n_opts = 0;  // note:: getting segfaults if misconfigured... needs a
-                      // check somewhere.
-  size_t n_args = 2;
 
-  err = cli_init(c, desc, usage, argc, (char**)argv, n_opts, n_args);
+  err = cli_init(c, desc, usage, argc, (char**)argv);
   ASSERT_EQ(err, CLI_OK);
 
   char hello[10] = "";
@@ -189,11 +178,8 @@ TEST(public, test_cli_parse_set_int_args_correctly) {
   cli_err err;
   const char* desc = "A useful app";
   const char* usage = "[OPTIONS]... [N]";
-  size_t n_opts = 0;  // note:: getting segfaults if misconfigured... needs a
-                      // check somewhere.
-  size_t n_args = 3;
 
-  err = cli_init(c, desc, usage, argc, (char**)argv, n_opts, n_args);
+  err = cli_init(c, desc, usage, argc, (char**)argv);
   ASSERT_EQ(err, CLI_OK);
 
   int x, y, z = 0;
@@ -226,11 +212,8 @@ TEST(public, test_cli_parse_set_float_args_correctly) {
   cli_err err;
   const char* desc = "A useful app";
   const char* usage = "[OPTIONS]... [N]";
-  size_t n_opts = 0;  // note:: getting segfaults if misconfigured... needs a
-                      // check somewhere.
-  size_t n_args = 3;
 
-  err = cli_init(c, desc, usage, argc, (char**)argv, n_opts, n_args);
+  err = cli_init(c, desc, usage, argc, (char**)argv);
   ASSERT_EQ(err, CLI_OK);
 
   float x, y, z = 0.0;

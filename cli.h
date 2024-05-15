@@ -46,9 +46,7 @@ cli_err cli_init(cli_command* cli,
                  const char* desc,
                  const char* usage,
                  int argc,
-                 char** argv,
-                 size_t n_opts,
-                 size_t n_args);
+                 char** argv);
 
 void cli_cleanup(cli_command* cli);
 

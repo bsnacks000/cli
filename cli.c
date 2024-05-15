@@ -12,6 +12,9 @@
 #define CLI_OPT_TOKEN_MAX_LEN 24
 #define CLI_OPT_USAGE_MAX_LEN 64
 
+#define CLI_MAX_OPTS 64
+#define CLI_MAX_ARGS 64
+
 void cli_print_err(cli_err err) {
   switch (err) {
     case CLI_PARSE_FAILED:
@@ -426,9 +429,7 @@ cli_err cli_init(cli_command* cli,
                  const char* desc,
                  const char* usage,
                  int argc,
-                 char** argv,
-                 size_t n_opts,
-                 size_t n_args) {
+                 char** argv) {
   cli->desc = desc;
   cli->usage = usage;
   cli->argc = argc;
@@ -438,7 +439,7 @@ cli_err cli_init(cli_command* cli,
   // we should always allocate 2 for optional help message flag `-h, --help`
   cli_opts* opts = (cli_opts*)malloc(sizeof(cli_opts));
   CLI_CHECK_MEM_ALLOC(opts);
-  cli_opts_init(opts, n_opts + 2);
+  cli_opts_init(opts, CLI_MAX_OPTS);
   cli->opts = opts;
 
   // help is really just used as token to break out of the parse.
@@ -447,15 +448,10 @@ cli_err cli_init(cli_command* cli,
   cli_opts_add(opts, "h", "", noop_parser, NULL, false, true);
   cli_opts_add(opts, "help", "", noop_parser, NULL, false, true);
 
-  // if we have args allocate the requested amount
-  if (n_args > 0) {
-    cli_args* args = (cli_args*)malloc(sizeof(cli_args));
-    CLI_CHECK_MEM_ALLOC(args);
-    cli_args_init(args, n_args);
-    cli->args = args;
-  } else {
-    cli->args = NULL;
-  }
+  cli_args* args = (cli_args*)malloc(sizeof(cli_args));
+  CLI_CHECK_MEM_ALLOC(args);
+  cli_args_init(args, CLI_MAX_ARGS);
+  cli->args = args;
 
   return CLI_OK;
 }
