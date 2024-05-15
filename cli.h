@@ -10,6 +10,9 @@ extern "C" {
 #define CLI_OPT_TOKEN_MAX_LEN 24
 #define CLI_OPT_USAGE_MAX_LEN 64
 
+#define CLI_MAX_OPTS 64
+#define CLI_MAX_ARGS 64
+
 #define CLI_UNUSED(x) (void)(x)
 
 #define CLI_CHECK_MEM_ALLOC(value)       \
@@ -41,6 +44,8 @@ void cli_print_err(cli_err err);
 typedef struct cli_command cli_command;
 
 cli_command* cli_command_new(void);
+
+void cli_command_destroy(cli_command* cli);
 
 cli_err cli_init(cli_command* cli,
                  const char* desc,

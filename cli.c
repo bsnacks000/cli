@@ -9,12 +9,6 @@
 
 #include "cli.h"
 
-#define CLI_OPT_TOKEN_MAX_LEN 24
-#define CLI_OPT_USAGE_MAX_LEN 64
-
-#define CLI_MAX_OPTS 64
-#define CLI_MAX_ARGS 64
-
 void cli_print_err(cli_err err) {
   switch (err) {
     case CLI_PARSE_FAILED:
@@ -423,6 +417,10 @@ cli_command* cli_command_new(void) {
   cli_command* c = (cli_command*)malloc(sizeof(cli_command));
   CLI_CHECK_MEM_ALLOC(c);
   return c;
+}
+
+void cli_command_destroy(cli_command* c) {
+  free(c);
 }
 
 cli_err cli_init(cli_command* cli,
