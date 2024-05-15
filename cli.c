@@ -309,9 +309,6 @@ cli_err cli_parse_loop(cli_opts* opts, cli_args* args, int argc, char** argv) {
   }
 
   if (args != NULL) {
-    // printf("argv_i: %d\n", argv_i);
-    // printf("argc: %d\n", argc);
-
     // check that argc - the current argv i == the number of registered
     // positional args
 
@@ -319,7 +316,7 @@ cli_err cli_parse_loop(cli_opts* opts, cli_args* args, int argc, char** argv) {
       return CLI_ARG_COUNT;
     }
 
-    for (size_t i = 0; i < args->idx; i++) {
+    for (size_t i = 0; i < args->idx; i++, argv_i++) {
       char* token = argv[argv_i];
       cli_arg* arg = args->args[i];
 
@@ -370,27 +367,21 @@ cli_err float_arg_parser(cli_arg* arg, const char* token) {
 
 cli_err int_opt_parser(cli_opt* opt, const char* token) {
   int* val = (int*)(opt->value);
-
   char* endptr;
   *val = (int)strtol(token, &endptr, 10);
-
   if (endptr == token) {
     return CLI_PARSE_FAILED;
   }
-
   return CLI_OK;
 }
 
 cli_err int_arg_parser(cli_arg* arg, const char* token) {
   int* val = (int*)(arg->value);
-
   char* endptr;
   *val = (int)strtol(token, &endptr, 10);
-
   if (endptr == token) {
     return CLI_PARSE_FAILED;
   }
-
   return CLI_OK;
 }
 
@@ -502,7 +493,7 @@ cli_err cli_add_int_option(cli_command* cli,
                       required, false);
 }
 
-cli_err cli_add_float_argument(cli_command* cli, int* value) {
+cli_err cli_add_float_argument(cli_command* cli, float* value) {
   return cli_args_add(cli->args, float_arg_parser, (void*)value);
 }
 

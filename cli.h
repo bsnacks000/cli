@@ -67,7 +67,7 @@ cli_err cli_add_int_option(cli_command* cli,
                            int* value,
                            bool required);
 
-cli_err cli_add_float_argument(cli_command* cli, int* value);
+cli_err cli_add_float_argument(cli_command* cli, float* value);
 
 cli_err cli_add_float_option(cli_command* cli,
                              const char* name,
