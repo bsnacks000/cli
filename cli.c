@@ -408,7 +408,7 @@ cli_err str_opt_parser(cli_opt* opt, const char* token) {
     return CLI_PARSE_FAILED_STR;
   }
 
-  strncpy(box->ptr, token, strlen(token) + 1);
+  strncpy(box->ptr, token, box->sz);
   return CLI_OK;
 }
 
@@ -420,7 +420,7 @@ cli_err str_arg_parser(cli_arg* arg, const char* token) {
     return CLI_PARSE_FAILED_STR;
   }
 
-  strncpy(box->ptr, token, strlen(token) + 1);
+  strncpy(box->ptr, token, box->sz);
   return CLI_OK;
 }
 
