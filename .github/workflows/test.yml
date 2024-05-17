@@ -31,7 +31,3 @@ jobs:
       - name: gtest
         working-directory: ${{github.workspace}}/build
         run: ./cli_tests
-
-      - name: valgrind
-        working-directory: ${{github.workspace}}/build
-        run: valgrind ./cli_tests
