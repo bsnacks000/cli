@@ -311,7 +311,7 @@ cli_err cli_parse_loop(cli_opts* opts, cli_args* args, int argc, char** argv) {
       }
 
       char tok_[CLI_OPT_TOKEN_MAX_LEN] = "";
-      strncpy(tok_, token, strlen(token) + 1);
+      strncpy(tok_, token, CLI_OPT_TOKEN_MAX_LEN);
 
       char* tok_str = tok_;
 
