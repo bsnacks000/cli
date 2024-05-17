@@ -317,7 +317,7 @@ TEST(public, test_cli_parse_handles_mixed_opt_types_args) {
   err = cli_add_int_option(c, "a", "usage", &a, false);
   ASSERT_EQ(err, CLI_OK);
 
-  char z[50] = "";
+  char z[32] = "";
   err = cli_add_str_option(c, "z", "usage", z, false);
   ASSERT_EQ(err, CLI_OK);
 
@@ -325,7 +325,7 @@ TEST(public, test_cli_parse_handles_mixed_opt_types_args) {
   err = cli_add_flag(c, "my-flag", "usage", &my_flag);
   ASSERT_EQ(err, CLI_OK);
 
-  char fname[50] = "";
+  char fname[32] = "";
   err = cli_add_str_argument(c, fname);
   ASSERT_EQ(err, CLI_OK);
 
@@ -335,6 +335,118 @@ TEST(public, test_cli_parse_handles_mixed_opt_types_args) {
 
   err = cli_parse(c);
   ASSERT_EQ(err, CLI_OK);
+
+  ASSERT_EQ(x, 42);
+  ASSERT_FLOAT_EQ(y, 43.5);
+  ASSERT_TRUE(strcmp("hello", z) == 0);
+  ASSERT_TRUE(my_flag);
+
+  ASSERT_TRUE(strcmp("./some-file.txt", fname) == 0);
+  ASSERT_EQ(n_arg, 999);
+
+  free(c);
+}
+
+TEST(public, test_cli_parse_error_on_missing_pos_args) {
+  const char* argv[] = {"./myapp", "--x=42"};
+  int argc = 2;
+
+  cli_command* c = cli_command_new();
+
+  cli_err err;
+  const char* desc = "A useful app";
+  const char* usage = "[OPTIONS]... [N]";
+
+  err = cli_init(c, desc, usage, argc, (char**)argv);
+  ASSERT_EQ(err, CLI_OK);
+
+  int x = 0;
+  err = cli_add_int_option(c, "x", "usage", &x, true);
+  ASSERT_EQ(err, CLI_OK);
+
+  char fname[32] = "";
+  err = cli_add_str_argument(c, fname);
+  ASSERT_EQ(err, CLI_OK);
+
+  int n_arg = 0;
+  err = cli_add_int_argument(c, &n_arg);
+  ASSERT_EQ(err, CLI_OK);
+
+  err = cli_parse(c);
+  ASSERT_EQ(err, CLI_ARG_COUNT);
+
+  free(c);
+}
+
+TEST(public, test_cli_parse_error_on_missing_req_opts) {
+  const char* argv[] = {"./myapp"};
+  int argc = 1;
+
+  cli_command* c = cli_command_new();
+
+  cli_err err;
+  const char* desc = "A useful app";
+  const char* usage = "[OPTIONS]... [N]";
+
+  err = cli_init(c, desc, usage, argc, (char**)argv);
+  ASSERT_EQ(err, CLI_OK);
+
+  int x = 0;
+  err = cli_add_int_option(c, "x", "usage", &x, true);
+  ASSERT_EQ(err, CLI_OK);
+
+  err = cli_parse(c);
+  ASSERT_EQ(err, CLI_UNSEEN_REQ_OPTS);
+
+  free(c);
+}
+
+TEST(public, test_cli_parse_handles_missing_opt_val) {
+  const char* argv[] = {"./myapp", "-x"};
+  int argc = 2;
+
+  cli_command* c = cli_command_new();
+
+  cli_err err;
+  const char* desc = "A useful app";
+  const char* usage = "[OPTIONS]... [N]";
+
+  err = cli_init(c, desc, usage, argc, (char**)argv);
+  ASSERT_EQ(err, CLI_OK);
+
+  int x = 0;
+  err = cli_add_int_option(c, "x", "usage", &x, true);
+  ASSERT_EQ(err, CLI_OK);
+
+  err = cli_parse(c);
+  ASSERT_EQ(err, CLI_OUT_OF_BOUNDS);
+
+  free(c);
+}
+
+TEST(public, test_cli_parse_handles_unseen_required_args) {
+  const char* argv[] = {"./myapp", "-x", "42"};
+  int argc = 3;
+
+  cli_command* c = cli_command_new();
+
+  cli_err err;
+  const char* desc = "A useful app";
+  const char* usage = "[OPTIONS]... [N]";
+
+  err = cli_init(c, desc, usage, argc, (char**)argv);
+  ASSERT_EQ(err, CLI_OK);
+
+  int x = 0;
+  err = cli_add_int_option(c, "x", "usage", &x, true);
+  ASSERT_EQ(err, CLI_OK);
+
+  int y = 0;
+  err = cli_add_int_option(c, "y", "usage", &y, true);
+  ASSERT_EQ(err, CLI_OK);
+
+  err = cli_parse(c);
+  ASSERT_EQ(err, CLI_UNSEEN_REQ_OPTS);
 
   free(c);
 }

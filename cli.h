@@ -7,11 +7,21 @@ extern "C" {
 
 #include <stdlib.h>
 
-#define CLI_OPT_TOKEN_MAX_LEN 24
-#define CLI_OPT_USAGE_MAX_LEN 64
+#ifndef CLI_OPT_TOKEN_MAX_LEN
+#define CLI_OPT_TOKEN_MAX_LEN 64
+#endif
 
+#ifndef CLI_OPT_USAGE_MAX_LEN
+#define CLI_OPT_USAGE_MAX_LEN 128
+#endif
+
+#ifndef CLI_MAX_OPTS
 #define CLI_MAX_OPTS 64
+#endif
+
+#ifndef CLI_MAX_ARGS
 #define CLI_MAX_ARGS 64
+#endif
 
 #define CLI_UNUSED(x) (void)(x)
 
@@ -86,7 +96,7 @@ cli_err cli_add_str_option(cli_command* cli,
                            char* value,
                            bool required);
 
-void cli_print_help_and_exit(cli_command* cli);
+void cli_print_help_and_exit(cli_command* cli, int status);
 
 cli_err cli_parse(cli_command* cli);
 

@@ -12,36 +12,34 @@
 void cli_print_err(cli_err err) {
   switch (err) {
     case CLI_PARSE_FAILED:
-      fprintf(stderr, "token parse failed.\n");
+      fprintf(stderr, "err: token parse failed.\n");
       break;
     case CLI_FULL_REGISTRY:
-      fprintf(stderr, "registry full.\n");
+      fprintf(stderr, "err: registry full.\n");
       break;
     case CLI_NOT_FOUND:
-      fprintf(stderr, "token not found.\n");
+      fprintf(stderr, "err: token not found.\n");
       break;
     case CLI_NAME_REQUIRED:
-      fprintf(stderr, "option name not found.\n");
+      fprintf(stderr, "err: option name not found.\n");
       break;
     case CLI_UNSEEN_REQ_OPTS:
-      fprintf(stderr, "Unseen required options.\n");
+      fprintf(stderr, "err: unseen required options.\n");
       break;
     case CLI_OUT_OF_BOUNDS:
-      fprintf(stderr, "Out of bounds during parse.\n");
+      fprintf(stderr, "err: out of bounds during parse.\n");
       break;
     case CLI_ALREADY_SEEN:
-      fprintf(stderr, "Option was already seen.\n");
+      fprintf(stderr, "err: option was already seen.\n");
       break;
     case CLI_ARG_COUNT:
-      fprintf(stderr,
-              "Positional arg count is greater then number of registered "
-              "position arguments.\n");
+      fprintf(stderr, "err: misconfigured positional arguments.\n");
       break;
     case CLI_TOKEN_TOO_LONG:
-      fprintf(stderr, "Token longer then allowed max.\n");
+      fprintf(stderr, "err: token longer then allowed max.\n");
       break;
     case CLI_USAGE_STR_TOO_LONG:
-      fprintf(stderr, "Usage string longer then allowed max.\n");
+      fprintf(stderr, "err: usage string longer then allowed max.\n");
       break;
     default:
       break;
@@ -307,14 +305,9 @@ cli_err cli_parse_loop(cli_opts* opts, cli_args* args, int argc, char** argv) {
         argv_i += 2;
         free(tok_str);
       }
-
-      // if argv_i != argc we have pos args or user mixed flags and args
-      // printf("argv_i: %d\n", argv_i);
-      // printf("argc: %d\n", argc);
-
-      // check that we have seen all required opts
-      // if the parse broke early
     }
+    // check that we have seen all required opts
+    // if the parse broke early
     if (!cli_opts_n_required_seen(opts)) {
       return CLI_UNSEEN_REQ_OPTS;
     }
@@ -323,7 +316,6 @@ cli_err cli_parse_loop(cli_opts* opts, cli_args* args, int argc, char** argv) {
   if (args != NULL) {
     // check that argc - the current argv i == the number of registered
     // positional args
-
     if ((argc - argv_i) != (int)(args->idx)) {
       return CLI_ARG_COUNT;
     }
@@ -346,14 +338,22 @@ cli_err cli_parse_loop(cli_opts* opts, cli_args* args, int argc, char** argv) {
 // TODO add float
 
 cli_err str_opt_parser(cli_opt* opt, const char* token) {
+  if (strlen(token) + 1 > CLI_OPT_TOKEN_MAX_LEN) {
+    return CLI_PARSE_FAILED;
+  }
   char* val = (char*)(opt->value);
-  strcpy(val, token);
+  strncpy(val, token, CLI_OPT_TOKEN_MAX_LEN);
   return CLI_OK;
 }
 
 cli_err str_arg_parser(cli_arg* arg, const char* token) {
+  if (strlen(token) + 1 > CLI_OPT_TOKEN_MAX_LEN) {
+    return CLI_PARSE_FAILED;
+  }
+
   char* val = (char*)(arg->value);
-  strcpy(val, token);
+
+  strncpy(val, token, CLI_OPT_TOKEN_MAX_LEN);
   return CLI_OK;
 }
 
@@ -528,7 +528,7 @@ cli_err cli_add_str_option(cli_command* cli,
                       required, false);
 }
 
-void cli_print_help_and_exit(cli_command* cli) {
+void cli_print_help_and_exit(cli_command* cli, int status) {
   char buf[1024];
 
   char initial[] =
@@ -551,14 +551,14 @@ void cli_print_help_and_exit(cli_command* cli) {
   }
 
   fprintf(stderr, "%s\n", buf);
-  exit(EXIT_SUCCESS);
+  exit(status);
 }
 
 cli_err cli_parse(cli_command* cli) {
   cli_err err = cli_parse_loop(cli->opts, cli->args, cli->argc, cli->argv);
 
   if (err == CLI_PRINT_HELP_AND_EXIT) {
-    cli_print_help_and_exit(cli);
+    cli_print_help_and_exit(cli, 0);
   }
 
   return err;
