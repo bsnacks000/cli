@@ -23,8 +23,17 @@
 
 void cli_print_err(cli_err err) {
   switch (err) {
-    case CLI_PARSE_FAILED:
-      fprintf(stderr, "err: token parse failed.\n");
+    case CLI_PARSE_FAILED_INT:
+      fprintf(stderr, "err: token parse failed for integer.\n");
+      break;
+    case CLI_PARSE_FAILED_BOOL:
+      fprintf(stderr, "err: token parse failed for boolean.\n");
+      break;
+    case CLI_PARSE_FAILED_FLOAT:
+      fprintf(stderr, "err: token parse failed for float.\n");
+      break;
+    case CLI_PARSE_FAILED_STR:
+      fprintf(stderr, "err: token parse failed for str: buf too small.\n");
       break;
     case CLI_FULL_REGISTRY:
       fprintf(stderr, "err: registry full.\n");
@@ -64,6 +73,54 @@ struct cli_arg;
 typedef cli_err (*cli_opt_parser)(struct cli_opt* opt, const char* token);
 typedef cli_err (*cli_arg_parser)(struct cli_arg* arg, const char* token);
 
+// internal box to carry the string buffer size so we don't overflow :(
+// this is allocated in the public API and deallocated here after the parse.
+typedef struct str_box {
+  char* ptr;
+  size_t sz;
+} str_box;
+
+// an array manager to deal with the liftime for the above.
+typedef struct str_boxes {
+  str_box** arr;
+  size_t cap;
+  size_t idx;
+} str_boxes;
+
+void str_boxes_init(str_boxes* b, size_t cap) {
+  str_box** arr = (str_box**)calloc(cap, sizeof(str_box));
+  CLI_CHECK_MEM_ALLOC(arr);
+  b->arr = arr;
+  b->cap = cap;
+  b->idx = 0;
+}
+
+// create a new str_box and return a reference via sb_val
+cli_err str_boxes_add(str_boxes* b, char* ptr, size_t sz, str_box** sb_val) {
+  if (b->idx == b->cap) {
+    return CLI_FULL_REGISTRY;
+  }
+
+  str_box* sb = (str_box*)malloc(sizeof(str_box));
+  CLI_CHECK_MEM_ALLOC(sb);
+  sb->ptr = ptr;
+  sb->sz = sz;
+
+  // add the the arena.
+  b->arr[b->idx] = sb;
+  b->idx++;
+  *sb_val = sb;
+
+  return CLI_OK;
+}
+
+void str_boxes_cleanup(str_boxes* b) {
+  for (; (int)b->idx > 0; b->idx--) {
+    free(b->arr[b->idx - 1]);
+  }
+  free(b->arr);
+}
+
 typedef struct cli_opt {
   const char* name;       // name of the arg without `-` or `--` prefix.
   const char* usage;      // A usage statement for help
@@ -93,7 +150,7 @@ void cli_opts_init(cli_opts* opts, size_t cap) {
 }
 
 void cli_opts_cleanup(cli_opts* opts) {
-  for (; opts->idx != 0; opts->idx--) {
+  for (; (int)opts->idx > 0; opts->idx--) {
     free(opts->opts[opts->idx - 1]);
   }
   free(opts->opts);
@@ -196,7 +253,7 @@ void cli_args_init(cli_args* args, size_t cap) {
 }
 
 void cli_args_cleanup(cli_args* args) {
-  for (; args->idx != 0; args->idx--) {
+  for (; (int)args->idx > 0; args->idx--) {
     free(args->args[args->idx - 1]);
   }
   free(args->args);
@@ -253,9 +310,10 @@ cli_err cli_parse_loop(cli_opts* opts, cli_args* args, int argc, char** argv) {
         return CLI_PRINT_HELP_AND_EXIT;
       }
 
-      char* tok_str = NULL;
-      tok_str = strdup(token);
-      CLI_CHECK_MEM_ALLOC(tok_str);
+      char tok_[CLI_OPT_TOKEN_MAX_LEN] = "";
+      strncpy(tok_, token, strlen(token) + 1);
+
+      char* tok_str = tok_;
 
       // sep on =
       char* first = strsep(&tok_str, "=");
@@ -267,12 +325,10 @@ cli_err cli_parse_loop(cli_opts* opts, cli_args* args, int argc, char** argv) {
 
       cli_opt* opt;
       if ((opt = cli_opts_find(opts, first)) == NULL) {
-        free(tok_str);
         return CLI_NOT_FOUND;
       }
       // check if we've seen this flag
       if (opt->seen) {
-        free(tok_str);
         return CLI_ALREADY_SEEN;
       }
 
@@ -283,11 +339,11 @@ cli_err cli_parse_loop(cli_opts* opts, cli_args* args, int argc, char** argv) {
       if (opt->is_flag) {
         cli_err err = opt->parser(opt, NULL);
         if (err != CLI_OK) {
-          free(tok_str);
           return err;
         }
         // incr += 1 and skip to next iter
         argv_i++;
+
         continue;
       }
       // we have a valid token like --data=42 split -> data, 42
@@ -295,7 +351,6 @@ cli_err cli_parse_loop(cli_opts* opts, cli_args* args, int argc, char** argv) {
       if (second != NULL) {
         cli_err err = opt->parser(opt, second);
         if (err != CLI_OK) {
-          free(tok_str);
           return err;
         }
         argv_i++;
@@ -305,17 +360,14 @@ cli_err cli_parse_loop(cli_opts* opts, cli_args* args, int argc, char** argv) {
 
         // check argv_i is not at the end so we don't reach over argv
         if (argv_i + 1 == argc) {
-          free(tok_str);
           return CLI_OUT_OF_BOUNDS;
         }
 
         cli_err err = opt->parser(opt, argv[argv_i + 1]);
         if (err != CLI_OK) {
-          free(tok_str);
           return err;
         }
         argv_i += 2;
-        free(tok_str);
       }
     }
     // check that we have seen all required opts
@@ -348,34 +400,27 @@ cli_err cli_parse_loop(cli_opts* opts, cli_args* args, int argc, char** argv) {
 
 /// these are some default parsers ... these should always be called from the
 
-// internal box to carry the string buffer size so we don't overflow :(
-// this is allocated in the public API and deallocated here after the parse.
-typedef struct str_box {
-  char* ptr;
-  size_t sz;
-} str_box;
-
 cli_err str_opt_parser(cli_opt* opt, const char* token) {
   str_box* box = (str_box*)(opt->value);
 
-  if ((sizeof(box->ptr) * box->sz) < strlen(token) + 1) {
-    return CLI_PARSE_FAILED;
+  size_t s = (sizeof(box->ptr) * box->sz) / sizeof(box->ptr);
+  if (s < strlen(token) + 1) {
+    return CLI_PARSE_FAILED_STR;
   }
 
   strncpy(box->ptr, token, strlen(token) + 1);
-  free(box);
   return CLI_OK;
 }
 
 cli_err str_arg_parser(cli_arg* arg, const char* token) {
   str_box* box = (str_box*)(arg->value);
 
-  if ((sizeof(box->ptr) * box->sz) < strlen(token) + 1) {
-    return CLI_PARSE_FAILED;
+  size_t s = (sizeof(box->ptr) * box->sz) / sizeof(box->ptr);
+  if (s < strlen(token) + 1) {
+    return CLI_PARSE_FAILED_STR;
   }
 
   strncpy(box->ptr, token, strlen(token) + 1);
-  free(box);
   return CLI_OK;
 }
 
@@ -384,7 +429,7 @@ cli_err float_opt_parser(cli_opt* opt, const char* token) {
   char* endptr;
   *val = (float)strtof(token, &endptr);
   if (endptr == token) {
-    return CLI_PARSE_FAILED;
+    return CLI_PARSE_FAILED_FLOAT;
   }
   return CLI_OK;
 }
@@ -394,7 +439,7 @@ cli_err float_arg_parser(cli_arg* arg, const char* token) {
   char* endptr;
   *val = (float)strtof(token, &endptr);
   if (endptr == token) {
-    return CLI_PARSE_FAILED;
+    return CLI_PARSE_FAILED_FLOAT;
   }
   return CLI_OK;
 }
@@ -404,7 +449,7 @@ cli_err int_opt_parser(cli_opt* opt, const char* token) {
   char* endptr;
   *val = (int)strtol(token, &endptr, 10);
   if (endptr == token) {
-    return CLI_PARSE_FAILED;
+    return CLI_PARSE_FAILED_INT;
   }
   return CLI_OK;
 }
@@ -414,7 +459,7 @@ cli_err int_arg_parser(cli_arg* arg, const char* token) {
   char* endptr;
   *val = (int)strtol(token, &endptr, 10);
   if (endptr == token) {
-    return CLI_PARSE_FAILED;
+    return CLI_PARSE_FAILED_INT;
   }
   return CLI_OK;
 }
@@ -430,7 +475,7 @@ cli_err bool_opt_parser(cli_opt* opt, const char* arg) {
     }
     return CLI_OK;
   }
-  return CLI_PARSE_FAILED;
+  return CLI_PARSE_FAILED_BOOL;
 }
 
 cli_err noop_parser(cli_opt* opt, const char* token) {
@@ -448,16 +493,13 @@ typedef struct cli_command {
   cli_args* args;
   int argc;
   char** argv;
+  str_boxes* sb;
 } cli_command;
 
 cli_command* cli_command_new(void) {
   cli_command* c = (cli_command*)malloc(sizeof(cli_command));
   CLI_CHECK_MEM_ALLOC(c);
   return c;
-}
-
-void cli_command_destroy(cli_command* c) {
-  free(c);
 }
 
 cli_err cli_init(cli_command* cli,
@@ -488,17 +530,34 @@ cli_err cli_init(cli_command* cli,
   cli_args_init(args, CLI_MAX_ARGS);
   cli->args = args;
 
+  // if every opt + arg is a string we would at most have MAX args and opts.
+  str_boxes* sb = (str_boxes*)malloc(sizeof(str_boxes));
+  str_boxes_init(sb, CLI_MAX_ARGS + CLI_MAX_OPTS);
+  cli->sb = sb;
+
   return CLI_OK;
 }
 
 void cli_cleanup(cli_command* cli) {
   if (cli->opts != NULL) {
     cli_opts_cleanup(cli->opts);
+    free(cli->opts);
   }
 
   if (cli->args != NULL) {
     cli_args_cleanup(cli->args);
+    free(cli->args);
   }
+
+  if (cli->sb != NULL) {
+    str_boxes_cleanup(cli->sb);
+    free(cli->sb);
+  }
+}
+
+void cli_command_destroy(cli_command* c) {
+  cli_cleanup(c);
+  free(c);
 }
 
 // high level API for adding options and arguments
@@ -538,10 +597,12 @@ cli_err cli_add_float_option(cli_command* cli,
 }
 
 cli_err cli_add_str_argument(cli_command* cli, char* value, size_t buf_size) {
-  str_box* box = (str_box*)malloc(sizeof(str_box));
-  CLI_CHECK_MEM_ALLOC(box);
-  box->ptr = value;
-  box->sz = buf_size;
+  cli_err err;
+  str_box* box = NULL;
+
+  if ((err = str_boxes_add(cli->sb, value, buf_size, &box)) != CLI_OK) {
+    return err;
+  }
 
   return cli_args_add(cli->args, str_arg_parser, (void*)box);
 }
@@ -552,10 +613,12 @@ cli_err cli_add_str_option(cli_command* cli,
                            char* value,
                            bool required,
                            size_t buf_size) {
-  str_box* box = (str_box*)malloc(sizeof(str_box));
-  CLI_CHECK_MEM_ALLOC(box);
-  box->ptr = value;
-  box->sz = buf_size;
+  cli_err err;
+  str_box* box = NULL;
+
+  if ((err = str_boxes_add(cli->sb, value, buf_size, &box)) != CLI_OK) {
+    return err;
+  }
 
   return cli_opts_add(cli->opts, name, usage, str_opt_parser, (void*)box,
                       required, false);

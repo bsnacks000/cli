@@ -24,7 +24,7 @@ TEST(public, test_cli_init_) {
   err = cli_init(c, desc, usage, argc, (char**)argv);
   ASSERT_EQ(err, CLI_OK);
 
-  free(c);
+  cli_command_destroy(c);
 }
 
 TEST(public, test_cli_parse_sets_boolean_flag_correctly) {
@@ -54,7 +54,7 @@ TEST(public, test_cli_parse_sets_boolean_flag_correctly) {
   ASSERT_EQ(x_bool, true);
   ASSERT_EQ(y_bool, true);
 
-  free(c);
+  cli_command_destroy(c);
 }
 
 TEST(public, test_cli_parse_set_str_option_correctly) {
@@ -80,7 +80,7 @@ TEST(public, test_cli_parse_set_str_option_correctly) {
   char expected[] = "my_string";
   ASSERT_TRUE(strcmp(buf, expected) == 0);
 
-  free(c);
+  cli_command_destroy(c);
 }
 
 TEST(public, test_cli_parse_set_int_option_correctly) {
@@ -106,7 +106,7 @@ TEST(public, test_cli_parse_set_int_option_correctly) {
   int expected = 42;
   ASSERT_EQ(x, expected);
 
-  free(c);
+  cli_command_destroy(c);
 }
 
 TEST(public, test_cli_parse_set_float_option_correctly) {
@@ -132,7 +132,7 @@ TEST(public, test_cli_parse_set_float_option_correctly) {
   float expected = 42.12345;
   ASSERT_EQ(x, expected);
 
-  free(c);
+  cli_command_destroy(c);
 }
 
 TEST(public, test_cli_parse_set_str_args_correctly) {
@@ -166,7 +166,7 @@ TEST(public, test_cli_parse_set_str_args_correctly) {
   // printf("world -> %s\n", world);
   ASSERT_TRUE(strcmp(world, expected_world) == 0);
 
-  free(c);
+  cli_command_destroy(c);
 }
 
 TEST(public, test_cli_parse_set_int_args_correctly) {
@@ -200,7 +200,7 @@ TEST(public, test_cli_parse_set_int_args_correctly) {
   ASSERT_EQ(y, 43);
   ASSERT_EQ(z, 44);
 
-  free(c);
+  cli_command_destroy(c);
 }
 
 TEST(public, test_cli_parse_set_float_args_correctly) {
@@ -234,7 +234,7 @@ TEST(public, test_cli_parse_set_float_args_correctly) {
   ASSERT_FLOAT_EQ(y, 43.456);
   ASSERT_FLOAT_EQ(z, 44.789);
 
-  free(c);
+  cli_command_destroy(c);
 }
 
 TEST(public, test_cli_parse_int_option_fails_on_bad_conversion) {
@@ -255,9 +255,9 @@ TEST(public, test_cli_parse_int_option_fails_on_bad_conversion) {
   ASSERT_EQ(err, CLI_OK);
 
   err = cli_parse(c);
-  ASSERT_EQ(err, CLI_PARSE_FAILED);
+  ASSERT_EQ(err, CLI_PARSE_FAILED_INT);
 
-  free(c);
+  cli_command_destroy(c);
 }
 
 TEST(public, test_cli_parse_set_int_arg_fails_on_bad_conversion) {
@@ -285,9 +285,9 @@ TEST(public, test_cli_parse_set_int_arg_fails_on_bad_conversion) {
   ASSERT_EQ(err, CLI_OK);
 
   err = cli_parse(c);
-  ASSERT_EQ(err, CLI_PARSE_FAILED);
+  ASSERT_EQ(err, CLI_PARSE_FAILED_INT);
 
-  free(c);
+  cli_command_destroy(c);
 }
 
 TEST(public, test_cli_parse_handles_mixed_opt_types_args) {
@@ -344,7 +344,7 @@ TEST(public, test_cli_parse_handles_mixed_opt_types_args) {
   ASSERT_TRUE(strcmp("./some-file.txt", fname) == 0);
   ASSERT_EQ(n_arg, 999);
 
-  free(c);
+  cli_command_destroy(c);
 }
 
 TEST(public, test_cli_parse_error_on_missing_pos_args) {
@@ -375,7 +375,7 @@ TEST(public, test_cli_parse_error_on_missing_pos_args) {
   err = cli_parse(c);
   ASSERT_EQ(err, CLI_ARG_COUNT);
 
-  free(c);
+  cli_command_destroy(c);
 }
 
 TEST(public, test_cli_parse_error_on_missing_req_opts) {
@@ -398,7 +398,7 @@ TEST(public, test_cli_parse_error_on_missing_req_opts) {
   err = cli_parse(c);
   ASSERT_EQ(err, CLI_UNSEEN_REQ_OPTS);
 
-  free(c);
+  cli_command_destroy(c);
 }
 
 TEST(public, test_cli_parse_handles_missing_opt_val) {
@@ -421,7 +421,7 @@ TEST(public, test_cli_parse_handles_missing_opt_val) {
   err = cli_parse(c);
   ASSERT_EQ(err, CLI_OUT_OF_BOUNDS);
 
-  free(c);
+  cli_command_destroy(c);
 }
 
 TEST(public, test_cli_parse_handles_unseen_required_args) {
@@ -448,7 +448,7 @@ TEST(public, test_cli_parse_handles_unseen_required_args) {
   err = cli_parse(c);
   ASSERT_EQ(err, CLI_UNSEEN_REQ_OPTS);
 
-  free(c);
+  cli_command_destroy(c);
 }
 
 TEST(public, test_cli_parse_handles_duplicate_opts) {
@@ -471,5 +471,28 @@ TEST(public, test_cli_parse_handles_duplicate_opts) {
   err = cli_parse(c);
   ASSERT_EQ(err, CLI_ALREADY_SEEN);
 
-  free(c);
+  cli_command_destroy(c);
+}
+
+TEST(public, test_cli_parse_str_buf_too_small) {
+  const char* argv[] = {"./myapp", "hello"};
+  int argc = 2;
+
+  cli_command* c = cli_command_new();
+
+  cli_err err;
+  const char* desc = "A useful app";
+  const char* usage = "[OPTIONS]... [N]";
+
+  err = cli_init(c, desc, usage, argc, (char**)argv);
+  ASSERT_EQ(err, CLI_OK);
+
+  char hello[3] = "";
+  err = cli_add_str_argument(c, hello, 3);  // pos 1
+  ASSERT_EQ(err, CLI_OK);
+
+  err = cli_parse(c);
+  ASSERT_EQ(err, CLI_PARSE_FAILED_STR);
+
+  cli_command_destroy(c);
 }
