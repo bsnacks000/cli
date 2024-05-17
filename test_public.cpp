@@ -236,3 +236,105 @@ TEST(public, test_cli_parse_set_float_args_correctly) {
 
   free(c);
 }
+
+TEST(public, test_cli_parse_int_option_fails_on_bad_conversion) {
+  const char* argv[] = {"./myapp", "-x", "hai"};
+  int argc = 3;
+
+  cli_command* c = cli_command_new();
+
+  cli_err err;
+  const char* desc = "A useful app";
+  const char* usage = "[OPTIONS]... [N]";
+
+  err = cli_init(c, desc, usage, argc, (char**)argv);
+  ASSERT_EQ(err, CLI_OK);
+
+  int x = 0;
+  err = cli_add_int_option(c, "x", "usage", &x, true);
+  ASSERT_EQ(err, CLI_OK);
+
+  err = cli_parse(c);
+  ASSERT_EQ(err, CLI_PARSE_FAILED);
+
+  free(c);
+}
+
+TEST(public, test_cli_parse_set_int_arg_fails_on_bad_conversion) {
+  const char* argv[] = {"./myapp", "42", "43", "oops"};
+  int argc = 4;
+
+  cli_command* c = cli_command_new();
+
+  cli_err err;
+  const char* desc = "A useful app";
+  const char* usage = "[OPTIONS]... [N]";
+
+  err = cli_init(c, desc, usage, argc, (char**)argv);
+  ASSERT_EQ(err, CLI_OK);
+
+  int x, y, z = 0;
+
+  err = cli_add_int_argument(c, &x);  // pos 1
+  ASSERT_EQ(err, CLI_OK);
+
+  err = cli_add_int_argument(c, &y);  // pos 2
+  ASSERT_EQ(err, CLI_OK);
+
+  err = cli_add_int_argument(c, &z);  // pos 3
+  ASSERT_EQ(err, CLI_OK);
+
+  err = cli_parse(c);
+  ASSERT_EQ(err, CLI_PARSE_FAILED);
+
+  free(c);
+}
+
+TEST(public, test_cli_parse_handles_mixed_opt_types_args) {
+  const char* argv[] = {"./myapp", "--x=42",          "-y",
+                        "43.5",    "--z=hello",       "-my-flag",
+                        "--",      "./some-file.txt", "999"};
+  int argc = 9;
+
+  cli_command* c = cli_command_new();
+
+  cli_err err;
+  const char* desc = "A useful app";
+  const char* usage = "[OPTIONS]... [N]";
+
+  err = cli_init(c, desc, usage, argc, (char**)argv);
+  ASSERT_EQ(err, CLI_OK);
+
+  int x = 0;
+  err = cli_add_int_option(c, "x", "usage", &x, true);
+  ASSERT_EQ(err, CLI_OK);
+
+  float y = 0.0;
+  err = cli_add_float_option(c, "y", "usage", &y, false);
+  ASSERT_EQ(err, CLI_OK);
+
+  int a = 0;
+  err = cli_add_int_option(c, "a", "usage", &a, false);
+  ASSERT_EQ(err, CLI_OK);
+
+  char z[50] = "";
+  err = cli_add_str_option(c, "z", "usage", z, false);
+  ASSERT_EQ(err, CLI_OK);
+
+  bool my_flag = false;
+  err = cli_add_flag(c, "my-flag", "usage", &my_flag);
+  ASSERT_EQ(err, CLI_OK);
+
+  char fname[50] = "";
+  err = cli_add_str_argument(c, fname);
+  ASSERT_EQ(err, CLI_OK);
+
+  int n_arg = 0;
+  err = cli_add_int_argument(c, &n_arg);
+  ASSERT_EQ(err, CLI_OK);
+
+  err = cli_parse(c);
+  ASSERT_EQ(err, CLI_OK);
+
+  free(c);
+}

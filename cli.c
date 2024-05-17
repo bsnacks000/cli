@@ -139,6 +139,7 @@ bool cli_opts_n_required_seen(cli_opts* opts) {
       }
     }
   }
+  // printf("req: %zu - seen: %zu\n", count_req, count_seen);
   return count_req == count_seen;
 }
 
@@ -222,6 +223,7 @@ cli_err cli_parse_loop(cli_opts* opts, cli_args* args, int argc, char** argv) {
       // printf("current token: %s\n", token);
       //  check an exact match on delimiter first
       if ((strcmp(token, "--") == 0)) {
+        argv_i++;
         break;
       }
 
@@ -241,18 +243,26 @@ cli_err cli_parse_loop(cli_opts* opts, cli_args* args, int argc, char** argv) {
         return CLI_PRINT_HELP_AND_EXIT;
       }
 
+      char* tok_str = NULL;
+      tok_str = strdup(token);
+      CLI_CHECK_MEM_ALLOC(tok_str);
+
       // sep on =
-      char* first = strsep(&token, "=");
-      char* second = strsep(&token, "=");
+      char* first = strsep(&tok_str, "=");
+      char* second = strsep(&tok_str, "=");
       // first should be guarateed
       //  second will either be none or garbage if = is abused
 
+      // printf("[%s, %s]\n", first, second);
+
       cli_opt* opt;
       if ((opt = cli_opts_find(opts, first)) == NULL) {
+        free(tok_str);
         return CLI_NOT_FOUND;
       }
       // check if we've seen this flag
       if (opt->seen) {
+        free(tok_str);
         return CLI_ALREADY_SEEN;
       }
 
@@ -263,6 +273,7 @@ cli_err cli_parse_loop(cli_opts* opts, cli_args* args, int argc, char** argv) {
       if (opt->is_flag) {
         cli_err err = opt->parser(opt, NULL);
         if (err != CLI_OK) {
+          free(tok_str);
           return err;
         }
         // incr += 1 and skip to next iter
@@ -274,6 +285,7 @@ cli_err cli_parse_loop(cli_opts* opts, cli_args* args, int argc, char** argv) {
       if (second != NULL) {
         cli_err err = opt->parser(opt, second);
         if (err != CLI_OK) {
+          free(tok_str);
           return err;
         }
         argv_i++;
@@ -283,14 +295,17 @@ cli_err cli_parse_loop(cli_opts* opts, cli_args* args, int argc, char** argv) {
 
         // check argv_i is not at the end so we don't reach over argv
         if (argv_i + 1 == argc) {
+          free(tok_str);
           return CLI_OUT_OF_BOUNDS;
         }
 
         cli_err err = opt->parser(opt, argv[argv_i + 1]);
         if (err != CLI_OK) {
+          free(tok_str);
           return err;
         }
         argv_i += 2;
+        free(tok_str);
       }
 
       // if argv_i != argc we have pos args or user mixed flags and args
@@ -299,9 +314,9 @@ cli_err cli_parse_loop(cli_opts* opts, cli_args* args, int argc, char** argv) {
 
       // check that we have seen all required opts
       // if the parse broke early
-      if (!cli_opts_n_required_seen(opts)) {
-        return CLI_UNSEEN_REQ_OPTS;
-      }
+    }
+    if (!cli_opts_n_required_seen(opts)) {
+      return CLI_UNSEEN_REQ_OPTS;
     }
   }
 
