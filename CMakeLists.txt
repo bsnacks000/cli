@@ -19,7 +19,7 @@ option(CLI_BUILD_EXAMPLES "Build the examples." OFF)
 set(LIBRARY_NAME cli)
 add_library(${LIBRARY_NAME} STATIC cli.c)
 target_include_directories(${LIBRARY_NAME} PUBLIC "${CMAKE_SOURCE_DIR}")
-target_compile_options(${LIBRARY_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror)
+target_compile_options(${LIBRARY_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror -Wformat-overflow=2)
 
 if(CLI_BUILD_TESTS)
     # use CTest and build the test suite

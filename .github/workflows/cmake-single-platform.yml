@@ -4,9 +4,9 @@ name: CMake on a single platform
 
 on:
   push:
-    branches: [ "development" ]
+    branches: ["development"]
   pull_request:
-    branches: [ "development" ]
+    branches: ["development"]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -20,18 +20,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: configure cmake 
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_BUILD_TESTS=on -DCMAKE_BUILD_EXAMPLES=on
+      - name: configure cmake
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCLI_BUILD_TESTS=on -DCLI_BUILD_EXAMPLES=on
 
-    - name: build
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      - name: build
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
-    - name: gtest
-      working-directory: ${{github.workspace}}/build
-      run: ./cli_tests 
+      - name: gtest
+        working-directory: ${{github.workspace}}/build
+        run: ./cli_tests
 
-    - name: valgrind 
-      working-directory: ${{github.workspace}}/build 
-      run: valgrind ./cli_tests 
+      - name: valgrind
+        working-directory: ${{github.workspace}}/build
+        run: valgrind ./cli_tests
