@@ -71,7 +71,7 @@ TEST(public, test_cli_parse_set_str_option_correctly) {
   ASSERT_EQ(err, CLI_OK);
 
   char buf[20] = "";
-  err = cli_add_str_option(c, "x", "usage", buf, true);
+  err = cli_add_str_option(c, "x", "usage", buf, true, 20);
   ASSERT_EQ(err, CLI_OK);
 
   err = cli_parse(c);
@@ -150,10 +150,10 @@ TEST(public, test_cli_parse_set_str_args_correctly) {
 
   char hello[10] = "";
   char world[10] = "";
-  err = cli_add_str_argument(c, hello);  // pos 1
+  err = cli_add_str_argument(c, hello, 10);  // pos 1
   ASSERT_EQ(err, CLI_OK);
 
-  err = cli_add_str_argument(c, world);  // pos 2
+  err = cli_add_str_argument(c, world, 10);  // pos 2
   ASSERT_EQ(err, CLI_OK);
 
   err = cli_parse(c);
@@ -318,7 +318,7 @@ TEST(public, test_cli_parse_handles_mixed_opt_types_args) {
   ASSERT_EQ(err, CLI_OK);
 
   char z[32] = "";
-  err = cli_add_str_option(c, "z", "usage", z, false);
+  err = cli_add_str_option(c, "z", "usage", z, false, 32);
   ASSERT_EQ(err, CLI_OK);
 
   bool my_flag = false;
@@ -326,7 +326,7 @@ TEST(public, test_cli_parse_handles_mixed_opt_types_args) {
   ASSERT_EQ(err, CLI_OK);
 
   char fname[32] = "";
-  err = cli_add_str_argument(c, fname);
+  err = cli_add_str_argument(c, fname, 32);
   ASSERT_EQ(err, CLI_OK);
 
   int n_arg = 0;
@@ -365,7 +365,7 @@ TEST(public, test_cli_parse_error_on_missing_pos_args) {
   ASSERT_EQ(err, CLI_OK);
 
   char fname[32] = "";
-  err = cli_add_str_argument(c, fname);
+  err = cli_add_str_argument(c, fname, 32);
   ASSERT_EQ(err, CLI_OK);
 
   int n_arg = 0;
@@ -447,6 +447,29 @@ TEST(public, test_cli_parse_handles_unseen_required_args) {
 
   err = cli_parse(c);
   ASSERT_EQ(err, CLI_UNSEEN_REQ_OPTS);
+
+  free(c);
+}
+
+TEST(public, test_cli_parse_handles_duplicate_opts) {
+  const char* argv[] = {"./myapp", "-x", "42", "-x", "43"};
+  int argc = 5;
+
+  cli_command* c = cli_command_new();
+
+  cli_err err;
+  const char* desc = "A useful app";
+  const char* usage = "[OPTIONS]... [N]";
+
+  err = cli_init(c, desc, usage, argc, (char**)argv);
+  ASSERT_EQ(err, CLI_OK);
+
+  int x = 0;
+  err = cli_add_int_option(c, "x", "usage", &x, true);
+  ASSERT_EQ(err, CLI_OK);
+
+  err = cli_parse(c);
+  ASSERT_EQ(err, CLI_ALREADY_SEEN);
 
   free(c);
 }

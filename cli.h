@@ -1,3 +1,13 @@
+/**
+ * @file cli.h
+ * @author bsnacks000
+ * @brief
+ * @version 0.1
+ * @date 2024-05-17
+ *
+ * @copyright Copyright (c) 2024
+ *
+ */
 #ifndef __CLI_H__
 #define __CLI_H__
 
@@ -7,18 +17,22 @@ extern "C" {
 
 #include <stdlib.h>
 
+// The max length for all tokens
 #ifndef CLI_OPT_TOKEN_MAX_LEN
 #define CLI_OPT_TOKEN_MAX_LEN 64
 #endif
 
+// The max length for option usage statement
 #ifndef CLI_OPT_USAGE_MAX_LEN
 #define CLI_OPT_USAGE_MAX_LEN 128
 #endif
 
+// Max number of options
 #ifndef CLI_MAX_OPTS
 #define CLI_MAX_OPTS 64
 #endif
 
+// Max number of args
 #ifndef CLI_MAX_ARGS
 #define CLI_MAX_ARGS 64
 #endif
@@ -43,7 +57,6 @@ typedef enum cli_err {
   CLI_OUT_OF_BOUNDS,
   CLI_ALREADY_SEEN,
   CLI_ARG_COUNT,
-  CLI_MISCONFIGURED,
   CLI_PRINT_HELP_AND_EXIT,
   CLI_TOKEN_TOO_LONG,
   CLI_USAGE_STR_TOO_LONG
@@ -88,13 +101,14 @@ cli_err cli_add_float_option(cli_command* cli,
                              float* value,
                              bool required);
 
-cli_err cli_add_str_argument(cli_command* cli, char* value);
+cli_err cli_add_str_argument(cli_command* cli, char* value, size_t buf_size);
 
 cli_err cli_add_str_option(cli_command* cli,
                            const char* name,
                            const char* usage,
                            char* value,
-                           bool required);
+                           bool required,
+                           size_t buf_size);
 
 void cli_print_help_and_exit(cli_command* cli, int status);
 

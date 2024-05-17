@@ -7,6 +7,8 @@
 void fail_fast(cli_err err);
 
 int main(int argc, char** argv) {
+  // printf("token length: %d\n", CLI_OPT_TOKEN_MAX_LEN);
+
   cli_err err;
   cli_command* c = cli_command_new();
 
@@ -17,7 +19,8 @@ int main(int argc, char** argv) {
   fail_fast(err);
 
   char name[CLI_OPT_TOKEN_MAX_LEN] = "";
-  err = cli_add_str_option(c, "name", "Your name. Optional.", name, false);
+  err = cli_add_str_option(c, "name", "Your name. Optional.", name, false,
+                           CLI_OPT_TOKEN_MAX_LEN);
   fail_fast(err);
 
   float x = 0.0;

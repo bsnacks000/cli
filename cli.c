@@ -1,3 +1,15 @@
+/**
+ * @file cli.c
+
+ * @author bsnacks000
+ * @brief
+ * @version 0.1.0
+ * @date 2024-05-17
+ *
+ * @copyright Copyright (c) 2024
+ *
+ */
+
 #include <errno.h>
 #include <float.h>
 #include <limits.h>
@@ -334,26 +346,36 @@ cli_err cli_parse_loop(cli_opts* opts, cli_args* args, int argc, char** argv) {
   return CLI_OK;
 }
 
-/// these are some default parsers ...
-// TODO add float
+/// these are some default parsers ... these should always be called from the
+
+// internal box to carry the string buffer size so we don't overflow :(
+// this is allocated in the public API and deallocated here after the parse.
+typedef struct str_box {
+  char* ptr;
+  size_t sz;
+} str_box;
 
 cli_err str_opt_parser(cli_opt* opt, const char* token) {
-  if (strlen(token) + 1 > CLI_OPT_TOKEN_MAX_LEN) {
+  str_box* box = (str_box*)(opt->value);
+
+  if ((sizeof(box->ptr) * box->sz) < strlen(token) + 1) {
     return CLI_PARSE_FAILED;
   }
-  char* val = (char*)(opt->value);
-  strncpy(val, token, CLI_OPT_TOKEN_MAX_LEN);
+
+  strncpy(box->ptr, token, strlen(token) + 1);
+  free(box);
   return CLI_OK;
 }
 
 cli_err str_arg_parser(cli_arg* arg, const char* token) {
-  if (strlen(token) + 1 > CLI_OPT_TOKEN_MAX_LEN) {
+  str_box* box = (str_box*)(arg->value);
+
+  if ((sizeof(box->ptr) * box->sz) < strlen(token) + 1) {
     return CLI_PARSE_FAILED;
   }
 
-  char* val = (char*)(arg->value);
-
-  strncpy(val, token, CLI_OPT_TOKEN_MAX_LEN);
+  strncpy(box->ptr, token, strlen(token) + 1);
+  free(box);
   return CLI_OK;
 }
 
@@ -515,16 +537,27 @@ cli_err cli_add_float_option(cli_command* cli,
                       required, false);
 }
 
-cli_err cli_add_str_argument(cli_command* cli, char* value) {
-  return cli_args_add(cli->args, str_arg_parser, (void*)value);
+cli_err cli_add_str_argument(cli_command* cli, char* value, size_t buf_size) {
+  str_box* box = (str_box*)malloc(sizeof(str_box));
+  CLI_CHECK_MEM_ALLOC(box);
+  box->ptr = value;
+  box->sz = buf_size;
+
+  return cli_args_add(cli->args, str_arg_parser, (void*)box);
 }
 
 cli_err cli_add_str_option(cli_command* cli,
                            const char* name,
                            const char* usage,
                            char* value,
-                           bool required) {
-  return cli_opts_add(cli->opts, name, usage, str_opt_parser, (void*)value,
+                           bool required,
+                           size_t buf_size) {
+  str_box* box = (str_box*)malloc(sizeof(str_box));
+  CLI_CHECK_MEM_ALLOC(box);
+  box->ptr = value;
+  box->sz = buf_size;
+
+  return cli_opts_add(cli->opts, name, usage, str_opt_parser, (void*)box,
                       required, false);
 }
 
