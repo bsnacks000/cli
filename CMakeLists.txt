@@ -32,11 +32,6 @@ set(LIBRARY_NAME cli)
 add_library(${LIBRARY_NAME} STATIC cli.c)
 target_include_directories(${LIBRARY_NAME} PUBLIC "${CMAKE_SOURCE_DIR}")
 
-if(APPLE)
-    target_compile_options(${LIBRARY_NAME} PRIVATE -stdlib=libc++)
-    target_compile_options(${LIBRARY_NAME} PRIVATE -fPIC) # Ensure position independent code for macOS
-endif()
-
 if(CLI_BUILD_TESTS)
     # use CTest and build the test suite
     # Add Googletest
