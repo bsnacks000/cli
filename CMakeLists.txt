@@ -1,9 +1,17 @@
 cmake_minimum_required(VERSION 3.26)
 
-set(PROJECT_NAME cli)
-project(${PROJECT_NAME} VERSION 0.1.0)
+if(CMAKE_VERSION VERSION_LESS "3.26")
+    message(FATAL_ERROR "CMake version 3.26 or higher is required!")
+endif()
 
-set(CMAKE_C_STANDARD_REQUIRED 17)
+set(PROJECT_NAME cli)
+project(${PROJECT_NAME} VERSION 0.1.1)
+
+# standard C17 only
+set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED 20)
 
 set(LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
@@ -15,11 +23,19 @@ endif()
 option(CLI_BUILD_TESTS "Build the Tests." OFF)
 option(CLI_BUILD_EXAMPLES "Build the examples." OFF)
 
+# Add common compiler flags
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wpedantic -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Werror")
+
 # Build the lib
 set(LIBRARY_NAME cli)
 add_library(${LIBRARY_NAME} STATIC cli.c)
 target_include_directories(${LIBRARY_NAME} PUBLIC "${CMAKE_SOURCE_DIR}")
-target_compile_options(${LIBRARY_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror -Wformat-overflow=2)
+
+if(APPLE)
+    target_compile_options(${LIBRARY_NAME} PRIVATE -stdlib=libc++)
+    target_compile_options(${LIBRARY_NAME} PRIVATE -fPIC) # Ensure position independent code for macOS
+endif()
 
 if(CLI_BUILD_TESTS)
     # use CTest and build the test suite
@@ -47,8 +63,6 @@ if(CLI_BUILD_TESTS)
 
     target_include_directories(${LIBRARY_NAME}_tests PRIVATE "${CMAKE_SOURCE_DIR}")
 
-    target_compile_options(${LIBRARY_NAME}_tests PRIVATE -Wall -Wextra -Wpedantic -Werror)
-
     include(GoogleTest)
     gtest_discover_tests(${LIBRARY_NAME}_tests)
 endif()
@@ -56,5 +70,4 @@ endif()
 if(CLI_BUILD_EXAMPLES)
     add_executable(calc examples/example.c)
     target_link_libraries(calc PRIVATE ${LIBRARY_NAME})
-    target_compile_options(calc PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()

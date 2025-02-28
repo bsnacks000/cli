@@ -310,8 +310,11 @@ cli_err cli_parse_loop(cli_opts* opts, cli_args* args, int argc, char** argv) {
         return CLI_PRINT_HELP_AND_EXIT;
       }
 
+      // safer then strcpy
       char tok_[CLI_OPT_TOKEN_MAX_LEN] = "";
-      strcpy(tok_, token);
+      strncpy(tok_, token, CLI_OPT_TOKEN_MAX_LEN - 1);
+      tok_[CLI_OPT_TOKEN_MAX_LEN - 1] = '\0';
+
       char* tok_str = tok_;
 
       // sep on =

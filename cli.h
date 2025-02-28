@@ -15,6 +15,7 @@
 extern "C" {
 #endif
 
+#include <stdbool.h>
 #include <stdlib.h>
 
 // The max length for all tokens
