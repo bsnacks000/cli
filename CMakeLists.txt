@@ -35,14 +35,24 @@ target_include_directories(${LIBRARY_NAME} PUBLIC "${CMAKE_SOURCE_DIR}")
 if(CLI_BUILD_TESTS)
     # use CTest and build the test suite
     # Add Googletest
-    include(cmake/cpm.cmake)
-    CPMAddPackage(
-        NAME GoogleTest
+    # include(cmake/cpm.cmake)
+    # CPMAddPackage(
+    # NAME GoogleTest
+    # GIT_TAG v1.14.0
+    # VERSION v1.14.0
+    # GITHUB_REPOSITORY google/googletest
+    # SOURCE_DIR ${LIB_DIR}/gtest
+    # )
+    include(FetchContent)
+
+    FetchContent_Declare(
+        GoogleTest
+        GIT_REPOSITORY https://github.com/google/googletest.git
         GIT_TAG v1.14.0
-        VERSION v1.14.0
-        GITHUB_REPOSITORY google/googletest
-        SOURCE_DIR ${LIB_DIR}/gtest
     )
+
+    # Download and update GoogleTest
+    FetchContent_MakeAvailable(GoogleTest)
 
     enable_testing()
 
